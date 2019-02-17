@@ -78,3 +78,9 @@ var newVnode = h('div#container.two.classes', {on: {click: anotherEventHandler}}
 // 第二个 `patch` 调用
 patch(vnode, newVnode); // Snabbdom 会高效地把旧视图更新到新的状态
 ```
+
+## 示例
+* [元素的动画渲染](http://snabbdom.github.io/snabbdom/examples/reorder-animation/)
+* [英雄过渡](http://snabbdom.github.io/snabbdom/examples/hero/)
+* [SVG传送带](http://snabbdom.github.io/snabbdom/examples/carousel-svg/)
+
