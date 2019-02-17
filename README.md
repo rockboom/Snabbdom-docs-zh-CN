@@ -48,3 +48,33 @@ Snabbdom由一个非常简单，高性能，可扩展的核心组成，核心的
   * 使用[snabbdom-helpers](https://github.com/krainboltgreene/snabbdom-helpers)创建简洁的虚拟DOM。
   * 使用[snabby](https://github.com/jamen/snabby)支持模板字符串。
   * 使用[snabbdom-looks-like](https://github.com/jvanbruegge/snabbdom-looks-like)声明虚拟DOM。
+
+## 行内示例
+```javascript
+var snabbdom = require('snabbdom');
+var patch = snabbdom.init([ // 选择模块来初始化patch函数
+  require('snabbdom/modules/class').default, // 方便切换类
+  require('snabbdom/modules/props').default, // 设置DOM元素的属性
+  require('snabbdom/modules/style').default, // 处理支持动画元素的样式
+  require('snabbdom/modules/eventlisteners').default, // 添加监听事件
+]);
+var h = require('snabbdom/h').default; // 用来创建虚拟节点的辅助函数
+
+var container = document.getElementById('container');
+
+var vnode = h('div#container.two.classes', {on: {click: someFn}}, [
+  h('span', {style: {fontWeight: 'bold'}}, 'This is bold'),
+  ' and this is just normal text',
+  h('a', {props: {href: '/foo'}}, 'I\'ll take you places!')
+]);
+// 修补空的DOM元素-这会把DOM修改为副作用
+patch(container, vnode);
+
+var newVnode = h('div#container.two.classes', {on: {click: anotherEventHandler}}, [
+  h('span', {style: {fontWeight: 'normal', fontStyle: 'italic'}}, 'This is now italic type'),
+  ' and this is still just normal text',
+  h('a', {props: {href: '/bar'}}, 'I\'ll take you places!')
+]);
+// 第二个 `patch` 调用
+patch(vnode, newVnode); // Snabbdom 会高效地把旧视图更新到新的状态
+```
