@@ -265,3 +265,67 @@ h('a', {attrs: {href: '/foo'}}, 'Go to Foo');
 
 如果是布尔属性(比如`disabled`，`hidden`，
 `selected`等 )，意味着不再依赖属性值(`true`或`false`)，而是取决于该属性自身在DOM元素中的存在/缺失。这些属性会被不同的模块处理：如果布尔属性被设置成[falsy值](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Boolean)(`0`, `-0`, `null`, `false`,`NaN`, `undefined`, 或者空字符串(`""`))，name这个属性将会被从DOM元素的属性列表中删除。
+
+### dataset模块
+
+可以设置DOM元素的自定义数据属性(`data-*`)。这些自定义属性可以通过[HTMLElement.dataset](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/dataset)属性访问。
+
+```javascript
+h('button', {dataset: {action: 'reset'}}, 'Reset');
+```
+
+### style模块
+
+style模块用于让HTML看起来平滑，并且流畅的执行动画。style模块的核心允许在DOM元素上设置CSS属性。
+
+```javascript
+h('span', {
+  style: {border: '1px solid #bada55', color: '#c0ffee', fontWeight: 'bold'}
+}, 'Say my name, and every colour illuminates');
+```
+
+值得注意的是，如果style属性被当做style对象的属性移除时，style模块并不会移除style属性。要想移除一个样式，你应该把对应的属性值设为空字符串。
+
+```javascript
+h('div', {
+  style: {position: shouldFollow ? 'fixed' : ''}
+}, 'I, I follow, I follow you');
+```
+
+#### 自定义属性（CSS变量）
+
+支持CSS的自定义属性（aka CSS属性），属性必须带有前缀`--`
+
+```javascript
+h('div', {
+  style: {'--warnColor': 'yellow'}
+}, 'Warning');
+```
+
+### 延时属性
+
+你也可以指明延时属性。无论什么时候更改延时属性，都会直到下一帧后才会应用更改。
+
+```javascript
+h('span', {
+  style: {opacity: '0', transition: 'opacity 1s', delayed: {opacity: '1'}}
+}, 'Imma fade right in!');
+```
+
+这使得声明式地为元素的输入设置动画变得容易。
+
+#### 为`remove`设置属性
+
+一旦元素将要被从DOM中移除，Styles中设置的`remove`属性就会执行。应用的样式应使用CSS过渡进行动画处理。只有在完成所有样式动画后，才会从DOM中删除该元素。
+
+```javascript
+h('span', {
+  style: {opacity: '1', transition: 'opacity 1s',
+          remove: {opacity: '0'}}
+}, 'It\'s better to fade out than to burn away');
+```
+
+这使得声明式地为元素的移除设置动画变得容易。
+
+#### 为`destroy`设置属性
+
