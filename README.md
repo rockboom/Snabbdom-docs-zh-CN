@@ -234,3 +234,34 @@ var myModule = {
 通过这样的机制，你能够轻松的增加Snabbdom的行为。相关说明请查看默认模块的实现。
 
 ## 模块文档
+
+这个部分描述核心模块。所有的模块都是可选的。
+
+### class模块
+
+class模块提供了一种简单的方式来动态地切换元素的类名。class模块期望`class`数据属性是一个对象。该对象应该把类名映射成布尔值，用来指明这个类名是否应该在vnode上保留或者是删除。
+
+```javascript
+h('a', {class: {active: true, selected: false}}, 'Toggle');
+```
+
+### props模块
+
+用来设置DOM元素的属性。
+
+```javascript
+h('a', {props: {href: '/foo'}}, 'Go to Foo');
+```
+
+### attributes模块
+
+和props模块相同，不过是用来设置DOM的属性而不是用来设置DOM特性。
+
+```javascript
+h('a', {attrs: {href: '/foo'}}, 'Go to Foo');
+```
+
+用`setAttribute`对attributes进行添加和更新。如果先前添加/设置的属性在`attrs`对象中不再存在，则使用`removeAttribute`把该属性从DOM元素的属性列表中删除。
+
+如果是布尔属性(比如`disabled`，`hidden`，
+`selected`等 )，意味着不再依赖属性值(`true`或`false`)，而是取决于该属性自身在DOM元素中的存在/缺失。这些属性会被不同的模块处理：如果布尔属性被设置成[falsy值](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Boolean)(`0`, `-0`, `null`, `false`,`NaN`, `undefined`, 或者空字符串(`""`))，name这个属性将会被从DOM元素的属性列表中删除。
