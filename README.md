@@ -405,3 +405,124 @@ h('div', [
 ```
 
 ## 辅助函数
+
+### SVG
+
+当使用`h`函数创建虚拟节点时，SVG才会起作用。SVG元素会自动在合适的命名空间下创建。
+
+```javascript
+var vnode = h('div', [
+  h('svg', {attrs: {width: 100, height: 100}}, [
+    h('circle', {attrs: {cx: 50, cy: 50, r: 40, stroke: 'green', 'stroke-width': 4, fill: 'yellow'}})
+  ])
+]);
+```
+
+可以查看[SVG示例](https://github.com/snabbdom/snabbdom/tree/master/examples/svg)和[SVG Carousel示例](https://github.com/snabbdom/snabbdom/tree/master/examples/carousel-svg)
+
+#### 在SVG元素中使用类名
+
+某些浏览器（比如IE<=11）[不支持SVG元素的`classList`属性](http://caniuse.com/#feat=classlist)。因此，_class_ 模块（内部使用`classList`属性）在这些浏览器内就不能运行。
+
+SVG元素的类选择器从0.6.7版本开始就能良好的运行。
+
+对于这些例子你可以使用 _attributes_ 模块给SVG元素添加动态的类名，像下面展示的数组一样：
+
+```js
+h('svg', [
+  h('text.underline', { // 'underline'是一个类选择器，在渲染器之间也不会改变。
+      attrs: {
+        // 'active' 和 'red' 是动态类名，会在渲染器之间发生改变。
+        // 因此我们需要把他们放在class属性当中去。
+        // (通常我们使用class 模块，但是在SVG内部不起作用)
+        class: [isActive && "active", isColored && "red"].filter(Boolean).join(" ")
+      }
+    },
+    'Hello World'
+  )
+])
+```
+
+### Thunks
+
+`thunks`函数接受一个选择器，一个指明thunk的key，一个返回vnode的函数，以及一个数量可变的状态参数。如果发生调用，这个渲染函数将会接受状态参数。
+
+`thunk(selector, key, renderFn, [stateArguments])`
+
+`key`是可选的。当`selector`在thunks的子节点中不唯一时，才会提供`key`。这样就能确保当有不同时总能正确地匹配。
+
+当一个元素用一成不变的数据处理时，Thunks是一个可以使用的优化策略。
+
+想象一个基于数字创建虚拟节点的简单函数。
+
+```js
+function numberView(n) {
+  return h('div', 'Number is: ' + n);
+}
+```
+
+视图仅依赖于`n`。这意味着如果`n`不发生改变，那么创建虚拟DOM节点和修补旧的虚拟节点就是浪费。我们可以使用`thunk`辅助函数禁止上面的行为。
+
+```js
+function render(state) {
+  return thunk('num', numberView, [state.number]);
+}
+```
+
+实际上并不会调用`numberView`函数，只会在虚拟数中放置一个假的虚拟节点。当Snabbdom对前一个vnode修补这个虚拟节点时，他将会比较`n`的值。如果`n`不改变，那他就会简单的使用旧的虚拟节点。这样就会禁止重新创建数字视图和差异过程。
+
+这里的视图函数只是一个例子。如果你在渲染一个复杂的视图，并且该视图会浪费大量的计算时间生成，实际上thunks才是相关的。
+
+## 虚拟节点
+
+**属性**
+ - [sel](#sel--string)
+ - [data](#data--object)
+ - [children](#children--array)
+ - [text](#text--string)
+ - [elm](#elm--element)
+ - [key](#key--string--number)
+
+#### sel : String
+
+虚拟节点的`.sel`属性是在创建期间传递给[`h()`](#snabbdomh)的CSS选择器。例如：`h('div#container',
+{}, [...])`将会创建一个把`div#container`作为它的`.sel`属性的虚拟节点。
+
+#### data : Object
+
+虚拟节点的`.data`属性用来添加信息的位置，当虚拟节点被创建时，[模块](#模块文档)通过`.data`属性来访问以及操纵真实的节点；添加样式，CSS类名，属性，等等。
+
+数据对象是[`h()`](#snabbdomh)中的第二个参数（可选）
+
+比如 `h('div', {props: {className: 'container'}}, [...])` 将会生成一个虚拟节点，并用
+
+```js
+{
+  "props": {
+    className: "container"
+  }
+}
+```
+
+作为它的`.data`对象。
+
+#### children : Array<vnode>
+
+虚拟节点的`.children`属性是[`h()`](#snabbdomh)创建时的第三个参数。`.children` 只是一个虚拟节点的数组，这些虚拟节点应该在创建之前被添加到父DOM节点的子节点中去。
+
+例如`h('div', {}, [ h('h1', {}, 'Hello, World') ])`将会创建一个虚拟节点，并把
+
+```js
+[
+ {
+   sel: 'h1',
+   data: {},
+   children: undefined,
+   text: 'Hello, World',
+   elm: Element,
+   key: undefined,
+ }
+]
+```
+
+作为它的`.children`属性。
