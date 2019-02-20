@@ -329,3 +329,79 @@ h('span', {
 
 #### 为`destroy`设置属性
 
+```javascript
+h('span', {
+  style: {opacity: '1', transition: 'opacity 1s',
+          destroy: {opacity: '0'}}
+}, 'It\'s better to fade out than to burn away');
+```
+
+### 事件监听模块
+
+事件监听模块为绑定事件监听器提供了强大的功能。
+
+通过给`on`提供一个对象，对象的属性就是你想监听的事件名，就可以给vnode的事件绑定函数。当事件执行时，函数就会被调用，并且该函数会被传递给属于它的事件对象。
+
+```javascript
+function clickHandler(ev) { console.log('got clicked'); }
+h('div', {on: {click: clickHandler}});
+```
+
+但是，很多时候你并不会在意事件对象本身。通常你会有一些与触发事件的元素相关联的数据，并且希望传递那些数据。
+
+想象一个有三个按钮的计数器应用，一个将计数器增加1，一个将计数器增加2，一个将计数器增加3。事实上你并不会关心哪一个按钮被点击了。你在意的是哪个数字和被点击的按钮关联。事件监听模块可以通过在命名的事件属性中提供一个数组来表达这样的意思。数组的第一个元素是事件执行时被调用的函数，函数的调用的值就是数组的第二个元素。
+
+```javascript
+function clickHandler(number) { console.log('button ' + number + ' was clicked!'); }
+h('div', [
+  h('a', {on: {click: [clickHandler, 1]}}),
+  h('a', {on: {click: [clickHandler, 2]}}),
+  h('a', {on: {click: [clickHandler, 3]}}),
+]);
+```
+
+每个处理函数被调用时不仅使用指定的参数，也会使用添加到参数列表中的当前事件和vnode。事件监听模块也支持为每个事件绑定多个处理函数，需要为事件指定一个处理函数的数组：
+```javascript
+stopPropagation = function(ev) { ev.stopPropagation() }
+sendValue = function(func, ev, vnode) { func(vnode.elm.value) }
+
+h('a', { on:{ click:[[sendValue, console.log], stopPropagation] } });
+```
+
+Snabbdom也允许在渲染器之间互换事件处理函数。这种情况发生时并没有实际地接触附加到DOM上的事件处理函数。
+
+但是，要注意，**在虚拟节点之间共享事件处理函数时应该小心**，因为这个事件处理模块使用的技术禁止在DOM上重新绑定事件处理函数（并且通常来说，在虚拟节点之间共享数据并不能确保能够起作用，因为模块允许改变给定的数据）。
+
+特别是不能像这样做：
+
+```javascript
+// Does not work
+var sharedHandler = {
+  change: function(e){ console.log('you chose: ' + e.target.value); }
+};
+h('div', [
+  h('input', {props: {type: 'radio', name: 'test', value: '0'},
+              on: sharedHandler}),
+  h('input', {props: {type: 'radio', name: 'test', value: '1'},
+              on: sharedHandler}),
+  h('input', {props: {type: 'radio', name: 'test', value: '2'},
+              on: sharedHandler})
+]);
+```
+
+大多数这样的例子可以使用基于数组的处理函数代替（上面的内容有描述）。另外，还要确保每一个节点只有唯一的`on`值：
+
+```javascript
+// Works
+var sharedHandler = function(e){ console.log('you chose: ' + e.target.value); };
+h('div', [
+  h('input', {props: {type: 'radio', name: 'test', value: '0'},
+              on: {change: sharedHandler}}),
+  h('input', {props: {type: 'radio', name: 'test', value: '1'},
+              on: {change: sharedHandler}}),
+  h('input', {props: {type: 'radio', name: 'test', value: '2'},
+              on: {change: sharedHandler}})
+]);
+```
+
+## 辅助函数
