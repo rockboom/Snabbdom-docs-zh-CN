@@ -526,3 +526,80 @@ function render(state) {
 ```
 
 作为它的`.children`属性。
+
+#### text : string
+
+当创建虚拟节点时，该节点只创建一个具有文本且只需使用`document.createTextNode（）`的子节点，name该节点也会创建`.text`属性。
+
+例如：`h('h1', {}, 'Hello')`将会创建一个`.text`属性为`Hello`的虚拟节点。
+
+#### elm : Element
+
+虚拟节点的`.elm`属性是一个指针，指向被Snabbdom创建的真实节点。在[钩子函数](#钩子函数)以及[模块](#模块文档)中做计算时，这个属性会非常有用。
+
+#### key : string | number
+
+当[`.data`](#data--object)对象内的key被提供时，`.key`属性就会被创建。`.key`属性被用来保存以前存在的DOM节点的指针，如果非必须的话就会禁止重新创建DOM节点。这样的话对于列表重新排序这样的事就会非常有用。key必须是字符串或数字才能允许正确查找，因为它在内部存储为对象内部的键/值对，其中的`.key`是键，而值是创建的[`.elm`](#elm--element)属性。
+
+例如：`h('div', {key: 1}, [])`将会创建一个`.key`属性值为`1`的虚拟节点。
+
+## 结构应用
+
+Snabbdom是一个低级的虚拟DOM库。关于如何构建应用程序，它并不是首选。
+
+下面有一些方式可以用Snabbdom来构建应用。
+
+* [functional-frontend-architecture](https://github.com/paldepind/functional-frontend-architecture) – 一个包含许多应用示例的仓库，这些例子说明了使用Snabbdom的架构。
+* [Cycle.js](https://cycle.js.org/) - “用于清洁代码的功能性和反应性JavaScript框架”使用Snabbdom
+* [Vue.js](http://vuejs.org/) 使用了Snabbdom的一个分支。
+* [scheme-todomvc](https://github.com/amirouche/scheme-todomvc/)在Snabbdom绑定的顶部构建了类redux的架构
+* [kaiju](https://github.com/AlexGalays/kaiju) - 在snabbdom之上的有状态组件和可观察的
+* [Tweed](https://tweedjs.github.io) – 面向对象的反应接口方法。
+* [Cyclow](http://cyclow.js.org) - “JavaScript的反应式前端框架”使用Snabbdom。
+* [sprotty](https://github.com/theia-ide/sprotty) - “基于网络的图表框架”使用Snabbdom。
+* [Mark Text](https://github.com/marktext/marktext) - 使用Snabbdom构建的“实时预览Markdown编辑器”。
+* [puddles](https://github.com/flintinatux/puddles) - ”小的虚拟DOM应用程序框架。纯Redux。没有样板。“ - 把 :heart: 内置在Snabbdom上。
+* [Backbone.VDOMView](https://github.com/jcbrand/backbone.vdomview) - 通过Snabbdom具有虚拟DOM功能的[Backbone](http://backbonejs.org/)视图。
+
+如果你在用其他的方法用Snabbdom构建应用程序，记得分享它。
+
+## 常见错误
+
+```
+Uncaught NotFoundError: Failed to execute 'insertBefore' on 'Node':
+    The node before which the new node is to be inserted is not a child of this node.
+```
+这个错误的原因是在patches之间重复使用了虚拟节点（查看代码示例），snabbdom存储传递给它的虚拟dom节点内的实际dom节点作为性能改进，因此不支持在patches之间复用节点。
+
+```js
+var sharedNode = h('div', {}, 'Selected');
+var vnode1 = h('div', [
+  h('div', {}, ['One']),
+  h('div', {}, ['Two']),
+  h('div', {}, [sharedNode]),
+]);
+var vnode2 = h('div', [
+  h('div', {}, ['One']),
+  h('div', {}, [sharedNode]),
+  h('div', {}, ['Three']),
+]);
+patch(container, vnode1);
+patch(vnode1, vnode2);
+```
+也可以通过创建对象的浅拷贝来解决此问题（这里有对象扩展语法）：
+```js
+var vnode2 = h('div', [
+  h('div', {}, ['One']),
+  h('div', {}, [{ ...sharedNode }]),
+  h('div', {}, ['Three']),
+]);
+```
+另一个解决办法是在工厂函数内覆盖共享的虚拟节点：
+```js
+var sharedNode = () => h('div', {}, 'Selected');
+var vnode1 = h('div', [
+  h('div', {}, ['One']),
+  h('div', {}, ['Two']),
+  h('div', {}, [sharedNode()]),
+]);
+```
